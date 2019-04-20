@@ -65,14 +65,20 @@ class GAN_cnn:
 	    flatten(inputs)
 
 	    batch_normalization(inputs)
+
+	    tf.nn.softmax_cross_entropy_with_logits_v2(
+	    labels,
+	    logits)
 	"""
 
 
-	def create_generator(self):
+	def create_generator(self,z):
 		# hard code all layer params
-		self.noise = tf.placeholder(tf.float32, shape=(None,num_noise))
 
-		x = fully_connected(self.noise,8*8*512,activation_fn=tf.nn.elu)
+		# experiment if placeholder and input work as the same
+		# self.noise = tf.placeholder(tf.float32, shape=(None,num_noise))
+
+		x = fully_connected(z,8*8*512,activation_fn=tf.nn.elu)
 		# x = batch_normalization(x)
 
 		x = tf.reshape(x,shape = (-1,8,8,512))
@@ -123,21 +129,22 @@ class GAN_cnn:
 		    strides=(2, 2),
 		    padding='same',
 		    data_format='channels_last',
-		    activation=tf.nn.elu,
+		    activation=tf.sigmoid,
 		    use_bias=True)
 		assert tf.shape(x) == (128,128,1)
 		
+		# output is a matrix with -1 to 1
 		return x
 
 
 
-	def create_discriminator(self):
+	def create_discriminator(self,img):
 		# hard code all layer params
-		self.img = tf.placeholder(tf.float32, shape=(None,128,128,1)) # (128,128,1)
+		# self.img = tf.placeholder(tf.float32, shape=(None,128,128,1)) # (128,128,1)
 		# assert self.img
 
 		x = Conv2D(
-		    self.img,
+		    img,
 		    filters = 64,
 		    kernel_siz=(5,5),
 		    strides=(2, 2),
@@ -169,32 +176,68 @@ class GAN_cnn:
 		    use_bias=True)
 
 		x = faltten(x)
-		x = fully_connected(x,1,activation_fn=None)
+		d_logits = fully_connected(x,1,activation_fn=None)
+		d_prob = tf.sigmoid(d_logits)
 
-	def discriminator_loss(self,):
+		return d_prob, d_logits
 
 
+	def loss(self,):
+
+		# import a img, and generate an img
+		self.img = tf.placeholder(tf.float32,shape=(None,128,128,1))
+		self.noise = tf.placeholder(tf.float32, shape=(None,num_noise))
+
+		fake = self.create_generator(self.noise)
+
+		# use discriminator 
+		d_prob_real, d_logits_real = self.create_discriminator(self.img)
+		fake_img = tf.reshape(fake,shape=(-1,128,128,1))
+		d_prob_fake, d_logits_fake = self.create_discriminator(fake_img)
+
+
+		# real img should approach to 1
+		# fake img should approach to 0
+		# in discriminator function
+		# sum the loss up
+		d_real_loss = tf.nn.softmax_cross_entropy_with_logits_v2(
+							labels=tf.ones_like(d_logits_real), 
+							logits=d_logits_real)
+		d_fake_loss = tf.nn.softmax_cross_entropy_with_logits_v2(
+							labels=tf.zeros_like(d_logits_fake), 
+							logits=d_logits_fake)
+
+		d_real_loss_reduced = tf.reduce_mean(d_real_loss)
+		d_fake_loss_reduced = tf.reduce_mean(d_fake_loss)
+		d_loss_reduced = d_real_loss_reduced+d_fake_loss_reduced
+
+		g_fake_loss = tf.nn.softmax_cross_entropy_with_logits_v2(
+							labels=tf.ones_like(d_logits_fake), 
+							logits=d_logits_fake)
+		g_loss_reduced = tf.reduce_mean(g_fake_loss)
+
+		# another way to writing this as paper is to 
+		# gradient ascend of d_loss part
+		# and then gradient decend of the g_loss part
+		# -tf.reduce_mean(tf.log(d_prob_real) + tf.log(1. - d_prob_fake))
+		# tf.reduce_mean(tf.log(d_prob_fake))
+
+		d_trainer=tf.train.AdamOptimizer(self.learning_rate).minimize(d_loss_reduced)
+		g_trainer=tf.train.AdamOptimizer(self.learning_rate).minimize(g_loss_reduced)
 
 	def generator_loss(self,):
 
 
 
-
-
-	def train_a_batch(self, x, real=True):
-		# feed in a single step
-		# real is the img in the set, 
-		# otherwise generate first then train
-		if real:
-			# x is a img
-			self.sess.run()
-		else:
-			# x is a random num array
-			self.sess.run()
-	
 	def train_single_step(self, img, noise):
 		# feed in a single step
-			self.sess.run([train_ops],feed_dict= {self.noise:noise,self.img:img})
+		# first update Discriminator
+		# second update generator
+		_, loss = self.sess.run([train_ops],feed_dict= {self.noise:noise,self.img:img})
+
+
+	
+
 
 
 
