@@ -9,29 +9,21 @@ import tensorflow as tf
 from tensorflow.contrib.layers import fully_connected
 from tensorflow.layers import Conv2D,Conv2DTranspose,flatten,batch_normalization
 
-# train ops
-sess = tf.Session()
-sess.run(tf.global_variables_initializer())
-GAN_cnn(sess,)
-
-optimizer = 
-
-
-
-
 
 class GAN_cnn:
-	def __init__(self,sess,num_noise,learning_rate,batch_size):
+	def __init__(self,num_noise = 100,learning_rate = 1e-4):
 		"""model structure
 		generator has 5 layers map to 128 by 128
 		discriminator map from 128 by 128 through 3 layers"""
-		self.sess = sess
+
 		self.num_noise = num_noise
 		self.learning_rate = learning_rate
-		self.batch_size = batch_size
 
+		self.loss()
+		self.save = self.saver()
 
-
+		self.sess = tf.Session()
+		self.sess.run(tf.global_variables_initializer())
 
 	"""
 	useful functions
@@ -234,28 +226,34 @@ class GAN_cnn:
 		self.g_trainer=tf.train.AdamOptimizer(self.learning_rate).minimize(g_loss_reduced,
 			var_list=g_vars)
 
-		self.losses = {
-			'discriminator_loss': self.d_trainer,
-			'generator_loss': self.g_trainer,
-			'total_loss': self.d_trainer+self.g_trainer
-		}
+		# self.losses = {
+		# 	'discriminator_loss': self.d_loss_reduced,
+		# 	'generator_loss': self.g_loss_reduced,
+		# 	'total_loss': self.d_trainer+self.g_trainer
+		# }
 
 	def train_single_step(self, img, noise):
 		# feed in a single step
 		# first update Discriminator
 		# second update generator
-		self.loss()
-		_ = self.sess.run(self.d_trainer,
+
+		_,d_loss = self.sess.run([self.d_trainer,self.d_loss_reduced],
 			feed_dict={self.img:img,self.noise:noise})
-		_,loss = self.sess.run([self.g_trainer,self.losses],
+		_,g_loss = self.sess.run([self.g_trainer,self.g_loss_reduced],
 			feed_dict={self.noise:noise})
-		return loss
+		losses = {
+			'discriminator_loss': d_loss,
+			'generator_loss': g_loss,
+			'total_loss': d_loss+g_loss
+		}
+		return losses
 
 
 	def generate_a_img(self,noise):
-		generated_img = self.sess.run(self.create_generator(z,reuse=None),
+		generated_img = self.sess.run(self.create_generator(z,reuse=True),
 			feed_dict={z:noise})
 		return generated_img
 
-
+	def saver(self):
+		return tf.train.Saver(var_list=tf.trainable_variables(), max_to_keep=5)
 
