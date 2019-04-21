@@ -72,117 +72,119 @@ class GAN_cnn:
 	"""
 
 
-	def create_generator(self,z):
+	def create_generator(self,z,reuse=None):
 		# hard code all layer params
 
 		# experiment if placeholder and input work as the same
 		# self.noise = tf.placeholder(tf.float32, shape=(None,num_noise))
 
-		x = fully_connected(z,8*8*512,activation_fn=tf.nn.elu)
-		# x = batch_normalization(x)
+		with tf.variable_scope("gen",reuse=reuse):
 
-		x = tf.reshape(x,shape = (-1,8,8,512))
-		x = Conv2DTranspose(
-		    x,
-		    filters=512,
-		    kernel_size=(5,5),
-		    strides=(2, 2),
-		    padding='same',
-		    data_format='channels_last',
-		    activation=tf.nn.elu,
-		    use_bias=True)
-		assert tf.shape(x) == (None,8,8,256)
-		x = Conv2DTranspose(
-		    x,
-		    filters=256,
-		    kernel_size=(5,5),
-		    strides=(2, 2),
-		    padding='same',
-		    data_format='channels_last',
-		    activation=tf.nn.elu,
-		    use_bias=True)
-		assert tf.shape(x) == (16,16,256)
-		x = Conv2DTranspose(
-		    x,
-		    filters=128,
-		    kernel_size=(5,5),
-		    strides=(2, 2),
-		    padding='same',
-		    data_format='channels_last',
-		    activation=tf.nn.elu,
-		    use_bias=True)
-		assert tf.shape(x) == (32,32,128)
-		x = Conv2DTranspose(
-		    x,
-		    filters=64,
-		    kernel_size=(5,5),
-		    strides=(2, 2),
-		    padding='same',
-		    data_format='channels_last',
-		    activation=tf.nn.elu,
-		    use_bias=True)
-		assert tf.shape(x) == (64,64,64)
-		x = Conv2DTranspose(
-		    x,
-		    filters=1,
-		    kernel_size=(5,5),
-		    strides=(2, 2),
-		    padding='same',
-		    data_format='channels_last',
-		    activation=tf.sigmoid,
-		    use_bias=True)
-		assert tf.shape(x) == (128,128,1)
-		
-		# output is a matrix with -1 to 1
-		return x
+			x = fully_connected(z,8*8*512,activation_fn=tf.nn.elu)
+			# x = batch_normalization(x)
+
+			x = tf.reshape(x,shape = (-1,8,8,512))
+			x = Conv2DTranspose(
+			    x,
+			    filters=512,
+			    kernel_size=(5,5),
+			    strides=(2, 2),
+			    padding='same',
+			    data_format='channels_last',
+			    activation=tf.nn.elu,
+			    use_bias=True)
+			assert tf.shape(x) == (None,8,8,256)
+			x = Conv2DTranspose(
+			    x,
+			    filters=256,
+			    kernel_size=(5,5),
+			    strides=(2, 2),
+			    padding='same',
+			    data_format='channels_last',
+			    activation=tf.nn.elu,
+			    use_bias=True)
+			assert tf.shape(x) == (16,16,256)
+			x = Conv2DTranspose(
+			    x,
+			    filters=128,
+			    kernel_size=(5,5),
+			    strides=(2, 2),
+			    padding='same',
+			    data_format='channels_last',
+			    activation=tf.nn.elu,
+			    use_bias=True)
+			assert tf.shape(x) == (32,32,128)
+			x = Conv2DTranspose(
+			    x,
+			    filters=64,
+			    kernel_size=(5,5),
+			    strides=(2, 2),
+			    padding='same',
+			    data_format='channels_last',
+			    activation=tf.nn.elu,
+			    use_bias=True)
+			assert tf.shape(x) == (64,64,64)
+			x = Conv2DTranspose(
+			    x,
+			    filters=1,
+			    kernel_size=(5,5),
+			    strides=(2, 2),
+			    padding='same',
+			    data_format='channels_last',
+			    activation=tf.sigmoid,
+			    use_bias=True)
+			assert tf.shape(x) == (128,128,1)
+			
+			# output is a matrix with -1 to 1
+			return x
 
 
 
-	def create_discriminator(self,img):
+	def create_discriminator(self,img,reuse=None):
 		# hard code all layer params
 		# self.img = tf.placeholder(tf.float32, shape=(None,128,128,1)) # (128,128,1)
 		# assert self.img
 
-		x = Conv2D(
-		    img,
-		    filters = 64,
-		    kernel_siz=(5,5),
-		    strides=(2, 2),
-		    padding='same',
-		    data_format='channels_last',
-		    dilation_rate=(1, 1),
-		    activation=tf.nn.elu,
-		    use_bias=True)
-		# assert tf.shape(x) == (64,64,1)
-		x = Conv2D(
-		    x,
-		    filters = 128,
-		    kernel_size=(5,5),
-		    strides=(2, 2),
-		    padding='same',
-		    data_format='channels_last',
-		    dilation_rate=(1, 1),
-		    activation=tf.nn.elu,
-		    use_bias=True)
-		x = Conv2D(
-		    x,
-		    filters = 128,
-		    kernel_size =(5,5),
-		    strides=(1, 1),
-		    padding='same',
-		    data_format='channels_last',
-		    dilation_rate=(1, 1),
-		    activation=tf.nn.elu,
-		    use_bias=True)
+		with tf.variable_scope("dis",reuse=reuse):
+			x = Conv2D(
+			    img,
+			    filters = 64,
+			    kernel_siz=(5,5),
+			    strides=(2, 2),
+			    padding='same',
+			    data_format='channels_last',
+			    dilation_rate=(1, 1),
+			    activation=tf.nn.elu,
+			    use_bias=True)
+			# assert tf.shape(x) == (64,64,1)
+			x = Conv2D(
+			    x,
+			    filters = 128,
+			    kernel_size=(5,5),
+			    strides=(2, 2),
+			    padding='same',
+			    data_format='channels_last',
+			    dilation_rate=(1, 1),
+			    activation=tf.nn.elu,
+			    use_bias=True)
+			x = Conv2D(
+			    x,
+			    filters = 128,
+			    kernel_size =(5,5),
+			    strides=(1, 1),
+			    padding='same',
+			    data_format='channels_last',
+			    dilation_rate=(1, 1),
+			    activation=tf.nn.elu,
+			    use_bias=True)
 
-		x = faltten(x)
-		d_logits = fully_connected(x,1,activation_fn=None)
-		d_prob = tf.sigmoid(d_logits)
+			x = faltten(x)
+			d_logits = fully_connected(x,1,activation_fn=None)
+			d_prob = tf.sigmoid(d_logits)
 
-		return d_prob, d_logits
+			return d_prob, d_logits
 
-
-	def loss(self,):
+	def loss(self):
 
 		# import a img, and generate an img
 		self.img = tf.placeholder(tf.float32,shape=(None,128,128,1))
@@ -193,7 +195,7 @@ class GAN_cnn:
 		# use discriminator 
 		d_prob_real, d_logits_real = self.create_discriminator(self.img)
 		fake_img = tf.reshape(fake,shape=(-1,128,128,1))
-		d_prob_fake, d_logits_fake = self.create_discriminator(fake_img)
+		d_prob_fake, d_logits_fake = self.create_discriminator(fake_img,reuse=True)
 
 
 		# real img should approach to 1
@@ -222,32 +224,38 @@ class GAN_cnn:
 		# -tf.reduce_mean(tf.log(d_prob_real) + tf.log(1. - d_prob_fake))
 		# tf.reduce_mean(tf.log(d_prob_fake))
 
-		d_trainer=tf.train.AdamOptimizer(self.learning_rate).minimize(d_loss_reduced)
-		g_trainer=tf.train.AdamOptimizer(self.learning_rate).minimize(g_loss_reduced)
+		# control which part of variables to train
+		tvars=tf.trainable_variables()
+		d_vars=[var for var in tvars if 'dis' in var.name]
+		g_vars=[var for var in tvars if 'gen' in var.name]
 
-	def generator_loss(self,):
+		self.d_trainer=tf.train.AdamOptimizer(self.learning_rate).minimize(d_loss_reduced,
+			var_list=d_vars)
+		self.g_trainer=tf.train.AdamOptimizer(self.learning_rate).minimize(g_loss_reduced,
+			var_list=g_vars)
 
-
+		self.losses = {
+			'discriminator_loss': self.d_trainer,
+			'generator_loss': self.g_trainer,
+			'total_loss': self.d_trainer+self.g_trainer
+		}
 
 	def train_single_step(self, img, noise):
 		# feed in a single step
 		# first update Discriminator
 		# second update generator
-		_, loss = self.sess.run([train_ops],feed_dict= {self.noise:noise,self.img:img})
+		self.loss()
+		_ = self.sess.run(self.d_trainer,
+			feed_dict={self.img:img,self.noise:noise})
+		_,loss = self.sess.run([self.g_trainer,self.losses],
+			feed_dict={self.noise:noise})
+		return loss
 
 
-	
+	def generate_a_img(self,noise):
+		generated_img = self.sess.run(self.create_generator(z,reuse=None),
+			feed_dict={z:noise})
+		return generated_img
 
 
-
-
-	def generate_a_img(self,):
-		self.sess.run()
-
-
-
-	def create_model(self):
-
-
-	def loss(self):
 
