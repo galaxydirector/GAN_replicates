@@ -29,38 +29,38 @@ class GAN_cnn:
 	useful functions
 
 		fully_connected(
-	    inputs,
-	    num_outputs,
-	    activation_fn=tf.nn.relu)
+		inputs,
+		num_outputs,
+		activation_fn=tf.nn.relu)
 
 		Conv2DTranspose(
-	    inputs,
-	    filters,
-	    kernel_size,
-	    strides=(1, 1),
-	    padding='valid',
-	    data_format='channels_last',
-	    activation=None,
-	    use_bias=True)
+		inputs,
+		filters,
+		kernel_size,
+		strides=(1, 1),
+		padding='valid',
+		data_format='channels_last',
+		activation=None,
+		use_bias=True)
 
 		Conv2D(
-	    inputs,
-	    filters,
-	    kernel_size,
-	    strides=(1, 1),
-	    padding='valid',
-	    data_format='channels_last',
-	    dilation_rate=(1, 1),
-	    activation=None,
-	    use_bias=True)
+		inputs,
+		filters,
+		kernel_size,
+		strides=(1, 1),
+		padding='valid',
+		data_format='channels_last',
+		dilation_rate=(1, 1),
+		activation=None,
+		use_bias=True)
 
-	    flatten(inputs)
+		flatten(inputs)
 
-	    batch_normalization(inputs)
+		batch_normalization(inputs)
 
-	    tf.nn.softmax_cross_entropy_with_logits_v2(
-	    labels,
-	    logits)
+		tf.nn.softmax_cross_entropy_with_logits_v2(
+		labels,
+		logits)
 	"""
 
 
@@ -77,54 +77,54 @@ class GAN_cnn:
 
 			x = tf.reshape(x,shape = (-1,8,8,512))
 			x = Conv2DTranspose(
-			    x,
-			    filters=512,
-			    kernel_size=(5,5),
-			    strides=(2, 2),
-			    padding='same',
-			    data_format='channels_last',
-			    activation=tf.nn.elu,
-			    use_bias=True)
+				x,
+				512,
+				(5,5),
+				strides=(2, 2),
+				padding='same',
+				data_format='channels_last',
+				activation=tf.nn.elu,
+				use_bias=True)
 			assert tf.shape(x) == (None,8,8,256)
 			x = Conv2DTranspose(
-			    x,
-			    filters=256,
-			    kernel_size=(5,5),
-			    strides=(2, 2),
-			    padding='same',
-			    data_format='channels_last',
-			    activation=tf.nn.elu,
-			    use_bias=True)
+				x,
+				256,
+				(5,5),
+				strides=(2, 2),
+				padding='same',
+				data_format='channels_last',
+				activation=tf.nn.elu,
+				use_bias=True)
 			assert tf.shape(x) == (16,16,256)
 			x = Conv2DTranspose(
-			    x,
-			    filters=128,
-			    kernel_size=(5,5),
-			    strides=(2, 2),
-			    padding='same',
-			    data_format='channels_last',
-			    activation=tf.nn.elu,
-			    use_bias=True)
+				x,
+				128,
+				(5,5),
+				strides=(2, 2),
+				padding='same',
+				data_format='channels_last',
+				activation=tf.nn.elu,
+				use_bias=True)
 			assert tf.shape(x) == (32,32,128)
 			x = Conv2DTranspose(
-			    x,
-			    filters=64,
-			    kernel_size=(5,5),
-			    strides=(2, 2),
-			    padding='same',
-			    data_format='channels_last',
-			    activation=tf.nn.elu,
-			    use_bias=True)
+				x,
+				64,
+				(5,5),
+				strides=(2, 2),
+				padding='same',
+				data_format='channels_last',
+				activation=tf.nn.elu,
+				use_bias=True)
 			assert tf.shape(x) == (64,64,64)
 			x = Conv2DTranspose(
-			    x,
-			    filters=1,
-			    kernel_size=(5,5),
-			    strides=(2, 2),
-			    padding='same',
-			    data_format='channels_last',
-			    activation=tf.sigmoid,
-			    use_bias=True)
+				x,
+				1,
+				(5,5),
+				strides=(2, 2),
+				padding='same',
+				data_format='channels_last',
+				activation=tf.sigmoid,
+				use_bias=True)
 			assert tf.shape(x) == (128,128,1)
 			
 			# output is a matrix with -1 to 1
@@ -139,36 +139,36 @@ class GAN_cnn:
 
 		with tf.variable_scope("dis",reuse=reuse):
 			x = Conv2D(
-			    img,
-			    filters = 64,
-			    kernel_siz=(5,5),
-			    strides=(2, 2),
-			    padding='same',
-			    data_format='channels_last',
-			    dilation_rate=(1, 1),
-			    activation=tf.nn.elu,
-			    use_bias=True)
+				img,
+				64,
+				(5,5),
+				strides=(2, 2),
+				padding='same',
+				data_format='channels_last',
+				dilation_rate=(1, 1),
+				activation=tf.nn.elu,
+				use_bias=True)
 			# assert tf.shape(x) == (64,64,1)
 			x = Conv2D(
-			    x,
-			    filters = 128,
-			    kernel_size=(5,5),
-			    strides=(2, 2),
-			    padding='same',
-			    data_format='channels_last',
-			    dilation_rate=(1, 1),
-			    activation=tf.nn.elu,
-			    use_bias=True)
+				x,
+				128,
+				(5,5),
+				strides=(2, 2),
+				padding='same',
+				data_format='channels_last',
+				dilation_rate=(1, 1),
+				activation=tf.nn.elu,
+				use_bias=True)
 			x = Conv2D(
-			    x,
-			    filters = 128,
-			    kernel_size =(5,5),
-			    strides=(1, 1),
-			    padding='same',
-			    data_format='channels_last',
-			    dilation_rate=(1, 1),
-			    activation=tf.nn.elu,
-			    use_bias=True)
+				x,
+				128,
+				(5,5),
+				strides=(1, 1),
+				padding='same',
+				data_format='channels_last',
+				dilation_rate=(1, 1),
+				activation=tf.nn.elu,
+				use_bias=True)
 
 			x = faltten(x)
 			d_logits = fully_connected(x,1,activation_fn=None)
@@ -180,7 +180,7 @@ class GAN_cnn:
 
 		# import a img, and generate an img
 		self.img = tf.placeholder(tf.float32,shape=(None,128,128,1))
-		self.noise = tf.placeholder(tf.float32, shape=(None,num_noise))
+		self.noise = tf.placeholder(tf.float32, shape=(None,self.num_noise))
 
 		fake = self.create_generator(self.noise)
 
@@ -227,9 +227,9 @@ class GAN_cnn:
 			var_list=g_vars)
 
 		# self.losses = {
-		# 	'discriminator_loss': self.d_loss_reduced,
-		# 	'generator_loss': self.g_loss_reduced,
-		# 	'total_loss': self.d_trainer+self.g_trainer
+		#   'discriminator_loss': self.d_loss_reduced,
+		#   'generator_loss': self.g_loss_reduced,
+		#   'total_loss': self.d_trainer+self.g_trainer
 		# }
 
 	def train_single_step(self, img, noise):
