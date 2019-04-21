@@ -1,3 +1,5 @@
+# import sys
+# sys.settrace
 # use to train
 """
 This file controls the operation to train a model
@@ -7,8 +9,11 @@ The pipeline starts with
 3.feed 'em into the model, set up training params
 4.and save them properly, record all the training data properly and possibly display 'em
 """
+import sys
 import numpy as np
 from tqdm import tqdm
+import time
+import matplotlib.pyplot as plt
 
 import os
 from glob import glob
@@ -16,9 +21,9 @@ import os.path as path
 
 from model import GAN_cnn
 
-data_root=path.expanduser('/home/aitrading/Desktop/GLTransform/output/npy128/')
+data_root=path.expanduser('/home/aitrading/Desktop/VAESelfies/output/npy128/')
 np_files=glob(path.join(data_root,'*.npy'))
-
+num_sample = len(np_files)
 
 logdir = path.expanduser('/home/aitrading/Desktop/models')
 img_path_root = path.expanduser('/home/aitrading/Desktop/img_results')
@@ -40,7 +45,7 @@ def create_data_batch(batch_size=1):
 def save(saver, sess, logdir, epoch):
 	model_name = 'model.ckpt'
 	checkpoint_path = os.path.join(logdir, model_name)
-	print('Storing checkpoint to {} ...'.format(logdir), end="")
+	print('Storing checkpoint to {} ...'.format(logdir))
 	sys.stdout.flush()
 
 	if not os.path.exists(logdir):
@@ -53,11 +58,11 @@ def save_img(data,path_root,epoch):
 	plt.imshow(data.reshape(128,128))
 	plt.title("epoch {} sample".format(epoch))
 
-	path = os.path.join(path_root,"epoch_{}".format(epoch))
-	plt.savefig(path.expanduser(path))
+	path_ = os.path.join(path_root,"epoch_{}".format(epoch))
+	plt.savefig(path.expanduser(path_))
 
 def trainer(model_object, learning_rate=1e-4, 
-			batch_size=32, num_epoch=31, log_step=5, num_noise = 100):
+			batch_size=32, num_epoch=331, log_step=5, num_noise = 100):
 	"""Operations:
 	1. Set up the model
 	2. start the training 
@@ -81,6 +86,7 @@ def trainer(model_object, learning_rate=1e-4,
 		# save a sample graph of each epoch
 		rand_z = np.random.uniform(-1,1,size=(1,100))
 		test_img = model.generate_a_img(rand_z)
+		# print("shape",test_img.shape)
 		save_img(test_img,img_path_root,epoch)
 
 		if epoch % log_step == 0:
