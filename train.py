@@ -40,7 +40,7 @@ def create_data_batch(batch_size=1):
 def save(saver, sess, logdir, epoch):
 	model_name = 'model.ckpt'
 	checkpoint_path = os.path.join(logdir, model_name)
-	print('Storing checkpoint to {} ...'.format(logdir), end="")
+	print('Storing checkpoint to {} ...'.format(logdir))
 	sys.stdout.flush()
 
 	if not os.path.exists(logdir):
