@@ -1,3 +1,5 @@
+# import sys
+# sys.settrace
 # use to train
 """
 This file controls the operation to train a model
@@ -7,8 +9,11 @@ The pipeline starts with
 3.feed 'em into the model, set up training params
 4.and save them properly, record all the training data properly and possibly display 'em
 """
+import sys
 import numpy as np
 from tqdm import tqdm
+import time
+import matplotlib.pyplot as plt
 
 import os
 from glob import glob
@@ -16,25 +21,26 @@ import os.path as path
 
 from model import GAN_cnn
 
-data_root=path.expanduser('/home/aitrading/Desktop/GLTransform/output/npy128/')
+data_root=path.expanduser('/home/aitrading/Desktop/VAESelfies/output/npy128/')
 np_files=glob(path.join(data_root,'*.npy'))
-
+num_sample = len(np_files)
 
 logdir = path.expanduser('/home/aitrading/Desktop/models')
 img_path_root = path.expanduser('/home/aitrading/Desktop/img_results')
 
 def create_data_batch(batch_size=1):
-	n=len(np_files)
-	i=0
+	file_list = np_files
+	np.random.shuffle(np_files)
+	n = len(file_list)
+	i = 0
 	while True:
 		temp = []
-		
-		for j in range(batch_size):
+		for _ in range(batch_size):
 			i+=1
 			if i>=n:
-				return
-			temp.append(np.load(np_files[i]).reshape(128,128,1))
-		
+				i=0
+				np.random.shuffle(file_list)
+			temp.append(np.load(file_list[i]).reshape(128,128,1))
 		yield np.array(temp)
 
 def save(saver, sess, logdir, epoch):
@@ -53,11 +59,11 @@ def save_img(data,path_root,epoch):
 	plt.imshow(data.reshape(128,128))
 	plt.title("epoch {} sample".format(epoch))
 
-	path = os.path.join(path_root,"epoch_{}".format(epoch))
-	plt.savefig(path.expanduser(path))
+	path_ = os.path.join(path_root,"epoch_{}".format(epoch))
+	plt.savefig(path.expanduser(path_))
 
 def trainer(model_object, learning_rate=1e-4, 
-			batch_size=32, num_epoch=31, log_step=5, num_noise = 100):
+			batch_size=32, num_epoch=331, log_step=5, num_noise = 64):
 	"""Operations:
 	1. Set up the model
 	2. start the training 
@@ -65,22 +71,25 @@ def trainer(model_object, learning_rate=1e-4,
 	4. generate sample img"""
 
 	model = model_object(num_noise = num_noise, learning_rate = learning_rate)
-
+	data_feed = create_data_batch(batch_size)
 	for epoch in range(num_epoch):
 		start_time = time.time()
 		for _ in tqdm(range(num_sample // batch_size)):
 			# Get a batch and noise
-			batch = next(create_data_batch(batch_size))
-			z = np.random.uniform(-1,1,size=(batch_size,100))
+			batch = next(data_feed)
+			z = np.random.uniform(-1,1,size=(batch_size,num_noise))
 
 			# Execute the forward and backward pass 
 			# Report computed losses
 			losses = model.train_single_step(img=batch,noise=z)
 		end_time = time.time()
 		
+
 		# save a sample graph of each epoch
-		rand_z = np.random.uniform(-1,1,size=(1,100))
+		rand_z = np.random.uniform(-1,1,size=(1,num_noise))
 		test_img = model.generate_a_img(rand_z)
+		test_img = np.array(test_img)*255
+
 		save_img(test_img,img_path_root,epoch)
 
 		if epoch % log_step == 0:

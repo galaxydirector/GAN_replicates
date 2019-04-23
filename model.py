@@ -7,7 +7,7 @@ controlling styles or other functionality."""
 
 import tensorflow as tf
 from tensorflow.contrib.layers import fully_connected
-from tensorflow.layers import Conv2D,Conv2DTranspose,flatten,batch_normalization
+from tensorflow.layers import conv2d,conv2d_transpose,flatten,batch_normalization
 
 
 class GAN_cnn:
@@ -33,7 +33,7 @@ class GAN_cnn:
 		num_outputs,
 		activation_fn=tf.nn.relu)
 
-		Conv2DTranspose(
+		conv2d_transpose(
 		inputs,
 		filters,
 		kernel_size,
@@ -43,7 +43,7 @@ class GAN_cnn:
 		activation=None,
 		use_bias=True)
 
-		Conv2D(
+		conv2d(
 		inputs,
 		filters,
 		kernel_size,
@@ -76,7 +76,7 @@ class GAN_cnn:
 			# x = batch_normalization(x)
 
 			x = tf.reshape(x,shape = (-1,8,8,512))
-			x = Conv2DTranspose(
+			x = conv2d_transpose(
 				x,
 				512,
 				(5,5),
@@ -85,8 +85,8 @@ class GAN_cnn:
 				data_format='channels_last',
 				activation=tf.nn.elu,
 				use_bias=True)
-			assert tf.shape(x) == (None,8,8,256)
-			x = Conv2DTranspose(
+			# assert tf.shape(x) == tf.convert_to_tensor((1,8,8,512),dtype=tf.int32), "{}".format(tf.shape(x))
+			x = conv2d_transpose(
 				x,
 				256,
 				(5,5),
@@ -95,8 +95,8 @@ class GAN_cnn:
 				data_format='channels_last',
 				activation=tf.nn.elu,
 				use_bias=True)
-			assert tf.shape(x) == (16,16,256)
-			x = Conv2DTranspose(
+			# assert tf.shape(x) == (16,16,256)
+			x = conv2d_transpose(
 				x,
 				128,
 				(5,5),
@@ -105,8 +105,8 @@ class GAN_cnn:
 				data_format='channels_last',
 				activation=tf.nn.elu,
 				use_bias=True)
-			assert tf.shape(x) == (32,32,128)
-			x = Conv2DTranspose(
+			# assert tf.shape(x) == (32,32,128)
+			x = conv2d_transpose(
 				x,
 				64,
 				(5,5),
@@ -115,8 +115,8 @@ class GAN_cnn:
 				data_format='channels_last',
 				activation=tf.nn.elu,
 				use_bias=True)
-			assert tf.shape(x) == (64,64,64)
-			x = Conv2DTranspose(
+			# assert tf.shape(x) == (64,64,64)
+			x = conv2d_transpose(
 				x,
 				1,
 				(5,5),
@@ -125,7 +125,7 @@ class GAN_cnn:
 				data_format='channels_last',
 				activation=tf.sigmoid,
 				use_bias=True)
-			assert tf.shape(x) == (128,128,1)
+			# assert tf.shape(x) == (128,128,1)
 			
 			# output is a matrix with -1 to 1
 			return x
@@ -138,7 +138,7 @@ class GAN_cnn:
 		# assert self.img
 
 		with tf.variable_scope("dis",reuse=reuse):
-			x = Conv2D(
+			x = conv2d(
 				img,
 				64,
 				(5,5),
@@ -149,7 +149,7 @@ class GAN_cnn:
 				activation=tf.nn.elu,
 				use_bias=True)
 			# assert tf.shape(x) == (64,64,1)
-			x = Conv2D(
+			x = conv2d(
 				x,
 				128,
 				(5,5),
@@ -159,7 +159,7 @@ class GAN_cnn:
 				dilation_rate=(1, 1),
 				activation=tf.nn.elu,
 				use_bias=True)
-			x = Conv2D(
+			x = conv2d(
 				x,
 				128,
 				(5,5),
@@ -170,7 +170,7 @@ class GAN_cnn:
 				activation=tf.nn.elu,
 				use_bias=True)
 
-			x = faltten(x)
+			x = flatten(x)
 			d_logits = fully_connected(x,1,activation_fn=None)
 			d_prob = tf.sigmoid(d_logits)
 
@@ -203,12 +203,12 @@ class GAN_cnn:
 
 		d_real_loss_reduced = tf.reduce_mean(d_real_loss)
 		d_fake_loss_reduced = tf.reduce_mean(d_fake_loss)
-		d_loss_reduced = d_real_loss_reduced+d_fake_loss_reduced
+		self.d_loss_reduced = d_real_loss_reduced+d_fake_loss_reduced
 
 		g_fake_loss = tf.nn.softmax_cross_entropy_with_logits_v2(
 							labels=tf.ones_like(d_logits_fake), 
 							logits=d_logits_fake)
-		g_loss_reduced = tf.reduce_mean(g_fake_loss)
+		self.g_loss_reduced = tf.reduce_mean(g_fake_loss)
 
 		# another way to writing this as paper is to 
 		# gradient ascend of d_loss part
@@ -221,9 +221,9 @@ class GAN_cnn:
 		d_vars=[var for var in tvars if 'dis' in var.name]
 		g_vars=[var for var in tvars if 'gen' in var.name]
 
-		self.d_trainer=tf.train.AdamOptimizer(self.learning_rate).minimize(d_loss_reduced,
+		self.d_trainer=tf.train.AdamOptimizer(self.learning_rate).minimize(self.d_loss_reduced,
 			var_list=d_vars)
-		self.g_trainer=tf.train.AdamOptimizer(self.learning_rate).minimize(g_loss_reduced,
+		self.g_trainer=tf.train.AdamOptimizer(self.learning_rate).minimize(self.g_loss_reduced,
 			var_list=g_vars)
 
 		# self.losses = {
@@ -250,8 +250,9 @@ class GAN_cnn:
 
 
 	def generate_a_img(self,noise):
-		generated_img = self.sess.run(self.create_generator(z,reuse=True),
-			feed_dict={z:noise})
+
+		generated_img = self.sess.run(self.create_generator(self.noise,reuse=True),
+			feed_dict={self.noise:noise})
 		return generated_img
 
 	def saver(self):
