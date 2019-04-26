@@ -24,7 +24,7 @@ class GAN_cnn:
 
 		self.loss()
 		self.log_writer_init(logdir)
-		self.save = self.saver()
+		self.saver = tf.train.Saver(var_list=tf.trainable_variables(), max_to_keep=5)
 
 		self.sess = tf.Session()
 		self.sess.run(tf.global_variables_initializer())
@@ -290,8 +290,8 @@ class GAN_cnn:
 		}
 		return losses
 
-	def saver(self):
-		return tf.train.Saver(var_list=tf.trainable_variables(), max_to_keep=5)
+	# def saver(self):
+	# 	return tf.train.Saver(var_list=tf.trainable_variables(), max_to_keep=5)
 
 
 	"""
