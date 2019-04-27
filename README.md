@@ -10,11 +10,9 @@ There are several important things to note in this version:
 
 ## Rep contains Two parts:
 
-### Model
-CNN models written in Tensorflow
+* Model: CNN models written in Tensorflow
 
-### Train
-Two result images using only decoder. Z is chosen to be [-3,3] in two dimension.
+* Train
 
 ## ToDo for future versions
 1. Different loss function
