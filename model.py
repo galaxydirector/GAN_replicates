@@ -4,7 +4,10 @@
 This model is an original GAN CNN version, only replicates the whole portfolio without 
 controlling styles or other functionality."""
 """All tf.layers functions are deprecated, needs to redefine in future version"""
-
+"""
+ToDo in this version:
+Rewrite all loss functions
+"""
 import numpy as np
 from itertools import count
 import tensorflow as tf
@@ -13,7 +16,7 @@ from tensorflow.layers import conv2d,conv2d_transpose,flatten,batch_normalizatio
 
 
 class GAN_cnn:
-	def __init__(self, logdir, num_noise = 64,learning_rate = 1e-4):
+	def __init__(self, logdir, loss = 'WGAN',num_noise = 64,learning_rate = 1e-4):
 		"""model structure
 		generator has 5 layers map to 128 by 128
 		discriminator map from 128 by 128 through 3 layers"""
@@ -22,7 +25,12 @@ class GAN_cnn:
 		self.learning_rate = learning_rate
 		self.step = count()
 
-		self.loss()
+		self.create_inputs()
+
+		if loss == 'WGAN':
+			self.W_loss()
+
+
 		self.log_writer_init(logdir)
 		self.saver = tf.train.Saver(var_list=tf.trainable_variables(), max_to_keep=5)
 
@@ -123,13 +131,44 @@ class GAN_cnn:
 
 			return d_prob, d_logits
 
-	def loss(self):
-
-		# import a img, and generate an img
+	def create_inputs(self):
 		self.img = tf.placeholder(tf.float32,shape=(None,128,128,1))
 		self.noise = tf.placeholder(tf.float32, shape=(None,self.num_noise))
 		self.rate = tf.placeholder(dtype=tf.float32, name='rate')
 		self.is_training = tf.placeholder(dtype=tf.bool, name='is_training')
+
+	def loss_original_paper(self):
+		# training flow
+		# generate and train pipeline
+		fake = self.create_generator(self.noise,self.rate,self.is_training)
+		self.d_prob_real, d_logits_real = self.create_discriminator(self.img,self.rate)
+		fake_img = tf.reshape(fake,shape=(-1,128,128,1))
+		self.d_prob_fake, d_logits_fake = self.create_discriminator(fake_img,self.rate,reuse=True)
+		
+		with tf.name_scope('loss'):
+	
+	def W_loss(self):
+		# training flow
+		# generate and train pipeline
+		fake = self.create_generator(self.noise,self.rate,self.is_training)
+		self.d_prob_real, d_logits_real = self.create_discriminator(self.img,self.rate)
+		fake_img = tf.reshape(fake,shape=(-1,128,128,1))
+		self.d_prob_fake, d_logits_fake = self.create_discriminator(fake_img,self.rate,reuse=True)
+
+		with tf.name_scope('loss'):
+
+	def W_loss(self):
+		# training flow
+		# generate and train pipeline
+		fake = self.create_generator(self.noise,self.rate,self.is_training)
+		self.d_prob_real, d_logits_real = self.create_discriminator(self.img,self.rate)
+		fake_img = tf.reshape(fake,shape=(-1,128,128,1))
+		self.d_prob_fake, d_logits_fake = self.create_discriminator(fake_img,self.rate,reuse=True)
+
+		with tf.name_scope('loss'):
+
+
+	def loss_original(self):
 
 		# generate and train pipeline
 		fake = self.create_generator(self.noise,self.rate,self.is_training)
