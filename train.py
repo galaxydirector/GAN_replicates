@@ -101,6 +101,7 @@ def trainer(model_object, ckpt = checkpoint_dir, logdir = logdir, learning_rate=
 		for _ in tqdm(range(num_sample // batch_size)):
 			# Get a batch and noise, train it
 			batch = next(data_feed)
+			# print(batch.shape)
 			z = np.random.uniform(-1,1,size=(batch_size,num_noise))
 			losses = model.train_single_step(img=batch,noise=z)
 

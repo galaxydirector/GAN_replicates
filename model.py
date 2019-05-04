@@ -5,6 +5,7 @@ This model is an original GAN CNN version, only replicates the whole portfolio w
 controlling styles or other functionality."""
 """All tf.layers functions are deprecated, needs to redefine in future version"""
 """
+Two directions: 1. loss functions 2. model architecture
 ToDo in this version:
 Rewrite all loss functions
 """
@@ -16,7 +17,7 @@ from tensorflow.layers import conv2d,conv2d_transpose,flatten,batch_normalizatio
 
 
 class GAN_cnn:
-	def __init__(self, logdir, loss = 'WGAN',num_noise = 64,learning_rate = 1e-4):
+	def __init__(self, logdir, num_noise = 64,learning_rate = 1e-4):
 		"""model structure
 		generator has 5 layers map to 128 by 128
 		discriminator map from 128 by 128 through 3 layers"""
@@ -27,8 +28,9 @@ class GAN_cnn:
 
 		self.create_inputs()
 
-		if loss == 'WGAN':
-			self.W_loss()
+		self.loss()
+		# if loss == 'WGAN':
+		# 	self.W_loss()
 
 
 		self.log_writer_init(logdir)
@@ -146,8 +148,16 @@ class GAN_cnn:
 		self.d_prob_fake, d_logits_fake = self.create_discriminator(fake_img,self.rate,reuse=True)
 		
 		with tf.name_scope('loss'):
-	
-	def W_loss(self):
+			ran = tf.random.uniform([1],minval=0,maxval=1)
+			self.d_real_loss = tf.cond(ran[0]<0.95, 
+				lambda : tf.nn.sigmoid_cross_entropy_with_logits(
+								labels=tf.ones_like(d_logits_real)*0.9, 
+								logits=d_logits_real),  
+				lambda :tf.nn.sigmoid_cross_entropy_with_logits(
+								labels=tf.zeros_like(d_logits_real)*0.9, 
+								logits=d_logits_real))
+
+	def LS_loss(self):
 		# training flow
 		# generate and train pipeline
 		fake = self.create_generator(self.noise,self.rate,self.is_training)
@@ -292,7 +302,7 @@ class GAN_cnn:
 		g_loss = -1
 
 		if train_d:
-			_,d_loss, = self.sess.run([self.d_trainer,self.d_loss_reduced], feed_dict={self.noise: noise, self.img: img, self.rate: rate_train, self.is_training:True})
+			_,d_loss = self.sess.run([self.d_trainer,self.d_loss_reduced], feed_dict={self.noise: noise, self.img: img, self.rate: rate_train, self.is_training:True})
 			# self.writer.add_summary(summary, step)
 			
 		if train_g:
@@ -329,8 +339,79 @@ class GAN_cnn:
 		}
 		return losses
 
-	# def saver(self):
-	# 	return tf.train.Saver(var_list=tf.trainable_variables(), max_to_keep=5)
+
+
+class W_GAN(GAN_cnn):
+	def __init__(self, logdir, num_noise = 64, learning_rate = 0.00005, 
+				critic_iterations = 5, clip_values = (-0.01,0.01)):
+		self.critic_iterations = critic_iterations
+		self.clip_values = clip_values
+		GAN_cnn.__init__(self, logdir, num_noise, learning_rate)
+
+	def loss(self):
+		# Training pipeline
+		
+		g_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,scope="generator")
+		d_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,scope="discriminator")
+		self.clip_discriminator_ops = [var.assign(tf.clip_by_value(var,self.clip_values[0],
+								self.clip_values[1])) for var in d_vars]
+
+		# option to add noise on real img, TODO
+		noise_to_real_img = False
+		if noise_to_real_img:
+			pass
+
+		# generate and train pipeline
+		fake = self.create_generator(self.noise,self.rate,self.is_training)
+		_, d_logits_real = self.create_discriminator(self.img,self.rate)
+		fake_img = tf.reshape(fake,shape=(-1,128,128,1))
+
+		_, d_logits_fake = self.create_discriminator(fake_img,self.rate,reuse=True)
+
+
+		with tf.name_scope('loss'):
+			self.d_loss_reduced = -tf.reduce_mean(d_logits_real-d_logits_fake)
+			self.g_loss_reduced = -tf.reduce_mean(d_logits_fake)
+
+
+			update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS) # for batch norm ops
+			with tf.control_dependencies(update_ops):
+				self.d_trainer=tf.train.RMSPropOptimizer(self.learning_rate).minimize(self.d_loss_reduced,
+					var_list=d_vars)
+				self.g_trainer=tf.train.RMSPropOptimizer(self.learning_rate).minimize(self.g_loss_reduced,
+					var_list=g_vars)
+
+		tf.summary.scalar('d_loss', self.d_loss_reduced)
+		tf.summary.scalar('g_loss', self.g_loss_reduced)
+
+
+
+	def train_single_step(self, img, noise):
+		rate_train = 0.6
+
+		g_ls, d_ls,summary = self.sess.run([
+			self.g_loss_reduced, 
+			self.d_loss_reduced,
+			self.summaries], feed_dict={self.img: img, self.noise: noise, 
+									self.rate: rate_train, self.is_training:True})
+		curr_step = next(self.step)
+		self.writer.add_summary(summary, curr_step)
+
+
+		self.sess.run(self.d_trainer,feed_dict={self.img: img, self.noise: noise, 
+								self.rate: rate_train, self.is_training:True})
+		self.sess.run([self.clip_discriminator_ops])
+
+		if curr_step%self.critic_iterations ==0:
+			self.sess.run(self.g_trainer,feed_dict={self.img: img, self.noise: noise, 
+								self.rate: rate_train, self.is_training:True})
+
+		losses = {
+			'discriminator_loss': -d_ls,
+			'generator_loss': -g_ls
+		}
+
+		return losses
 
 
 	"""
@@ -370,3 +451,17 @@ class GAN_cnn:
 		labels,
 		logits)
 	"""
+
+"""
+WGAN loss function Notes:
+I guess this reference has wrong discriminator loss function
+https://wiseodd.github.io/techblog/2017/02/04/wasserstein-gan/
+I guess this is also wrong by reduce->compute gradient->apply_gradient,
+which is actually gradient decent instead of ascend for both functions
+https://github.com/shekkizh/WassersteinGAN.tensorflow/blob/master/models/GAN_models.py
+
+https://github.com/cameronfabbri/Improved-Wasserstein-GAN/blob/master/train.py
+
+Rest of them are ok
+https://medium.com/@jonathan_hui/gan-wasserstein-gan-wgan-gp-6a1a2aa1b490
+"""
