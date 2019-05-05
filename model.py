@@ -139,46 +139,46 @@ class GAN_cnn:
 		self.rate = tf.placeholder(dtype=tf.float32, name='rate')
 		self.is_training = tf.placeholder(dtype=tf.bool, name='is_training')
 
-	def loss_original_paper(self):
-		# training flow
-		# generate and train pipeline
-		fake = self.create_generator(self.noise,self.rate,self.is_training)
-		self.d_prob_real, d_logits_real = self.create_discriminator(self.img,self.rate)
-		fake_img = tf.reshape(fake,shape=(-1,128,128,1))
-		self.d_prob_fake, d_logits_fake = self.create_discriminator(fake_img,self.rate,reuse=True)
+	# def loss_original_paper(self):
+	# 	# training flow
+	# 	# generate and train pipeline
+	# 	fake = self.create_generator(self.noise,self.rate,self.is_training)
+	# 	self.d_prob_real, d_logits_real = self.create_discriminator(self.img,self.rate)
+	# 	fake_img = tf.reshape(fake,shape=(-1,128,128,1))
+	# 	self.d_prob_fake, d_logits_fake = self.create_discriminator(fake_img,self.rate,reuse=True)
 		
-		with tf.name_scope('loss'):
-			ran = tf.random.uniform([1],minval=0,maxval=1)
-			self.d_real_loss = tf.cond(ran[0]<0.95, 
-				lambda : tf.nn.sigmoid_cross_entropy_with_logits(
-								labels=tf.ones_like(d_logits_real)*0.9, 
-								logits=d_logits_real),  
-				lambda :tf.nn.sigmoid_cross_entropy_with_logits(
-								labels=tf.zeros_like(d_logits_real)*0.9, 
-								logits=d_logits_real))
+	# 	with tf.name_scope('loss'):
+	# 		ran = tf.random.uniform([1],minval=0,maxval=1)
+	# 		self.d_real_loss = tf.cond(ran[0]<0.95, 
+	# 			lambda : tf.nn.sigmoid_cross_entropy_with_logits(
+	# 							labels=tf.ones_like(d_logits_real)*0.9, 
+	# 							logits=d_logits_real),  
+	# 			lambda :tf.nn.sigmoid_cross_entropy_with_logits(
+	# 							labels=tf.zeros_like(d_logits_real)*0.9, 
+	# 							logits=d_logits_real))
 
-	def LS_loss(self):
-		# training flow
-		# generate and train pipeline
-		fake = self.create_generator(self.noise,self.rate,self.is_training)
-		self.d_prob_real, d_logits_real = self.create_discriminator(self.img,self.rate)
-		fake_img = tf.reshape(fake,shape=(-1,128,128,1))
-		self.d_prob_fake, d_logits_fake = self.create_discriminator(fake_img,self.rate,reuse=True)
+	# def LS_loss(self):
+	# 	# training flow
+	# 	# generate and train pipeline
+	# 	fake = self.create_generator(self.noise,self.rate,self.is_training)
+	# 	self.d_prob_real, d_logits_real = self.create_discriminator(self.img,self.rate)
+	# 	fake_img = tf.reshape(fake,shape=(-1,128,128,1))
+	# 	self.d_prob_fake, d_logits_fake = self.create_discriminator(fake_img,self.rate,reuse=True)
 
-		with tf.name_scope('loss'):
+	# 	with tf.name_scope('loss'):
 
-	def W_loss(self):
-		# training flow
-		# generate and train pipeline
-		fake = self.create_generator(self.noise,self.rate,self.is_training)
-		self.d_prob_real, d_logits_real = self.create_discriminator(self.img,self.rate)
-		fake_img = tf.reshape(fake,shape=(-1,128,128,1))
-		self.d_prob_fake, d_logits_fake = self.create_discriminator(fake_img,self.rate,reuse=True)
+	# def W_loss(self):
+	# 	# training flow
+	# 	# generate and train pipeline
+	# 	fake = self.create_generator(self.noise,self.rate,self.is_training)
+	# 	self.d_prob_real, d_logits_real = self.create_discriminator(self.img,self.rate)
+	# 	fake_img = tf.reshape(fake,shape=(-1,128,128,1))
+	# 	self.d_prob_fake, d_logits_fake = self.create_discriminator(fake_img,self.rate,reuse=True)
 
-		with tf.name_scope('loss'):
+	# 	with tf.name_scope('loss'):
 
 
-	def loss_original(self):
+	def loss(self):
 
 		# generate and train pipeline
 		fake = self.create_generator(self.noise,self.rate,self.is_training)
@@ -237,8 +237,7 @@ class GAN_cnn:
 
 			# control which part of variables to train
 			# tvars=tf.trainable_variables()
-			# d_vars=[var for var in tvars if var.name.startswith("discriminator")]
-			# g_vars=[var for var in tvars if var.name.startswith("generator")]
+
 			g_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,scope="generator")
 			d_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,scope="discriminator")
 
@@ -351,10 +350,10 @@ class W_GAN(GAN_cnn):
 	def loss(self):
 		# Training pipeline
 		
-		g_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,scope="generator")
-		d_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,scope="discriminator")
-		self.clip_discriminator_ops = [var.assign(tf.clip_by_value(var,self.clip_values[0],
-								self.clip_values[1])) for var in d_vars]
+		# tvars=tf.trainable_variables()
+		# d_vars=[var for var in tvars if var.name.startswith("discriminator")]
+		# g_vars=[var for var in tvars if var.name.startswith("generator")]
+
 
 		# option to add noise on real img, TODO
 		noise_to_real_img = False
@@ -373,7 +372,11 @@ class W_GAN(GAN_cnn):
 			self.d_loss_reduced = -tf.reduce_mean(d_logits_real-d_logits_fake)
 			self.g_loss_reduced = -tf.reduce_mean(d_logits_fake)
 
-
+			g_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,scope="generator")
+			d_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,scope="discriminator")
+			self.clip_discriminator_ops = [var.assign(tf.clip_by_value(var,self.clip_values[0],
+									self.clip_values[1])) for var in d_vars]
+		
 			update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS) # for batch norm ops
 			with tf.control_dependencies(update_ops):
 				self.d_trainer=tf.train.RMSPropOptimizer(self.learning_rate).minimize(self.d_loss_reduced,
@@ -400,7 +403,8 @@ class W_GAN(GAN_cnn):
 
 		self.sess.run(self.d_trainer,feed_dict={self.img: img, self.noise: noise, 
 								self.rate: rate_train, self.is_training:True})
-		self.sess.run([self.clip_discriminator_ops])
+		self.sess.run(self.clip_discriminator_ops,feed_dict={self.img: img, self.noise: noise, 
+								self.rate: rate_train, self.is_training:True})
 
 		if curr_step%self.critic_iterations ==0:
 			self.sess.run(self.g_trainer,feed_dict={self.img: img, self.noise: noise, 
