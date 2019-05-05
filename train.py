@@ -20,9 +20,10 @@ from glob import glob
 import os.path as path
 from datetime import datetime
 
-from model import GAN_cnn
+import tensorflow as tf
+from model import GAN_cnn,W_GAN
 
-data_root=path.expanduser('/home/aitrading/Desktop/VAESelfies/output/yanci_only/')
+data_root=path.expanduser('/home/aitrading/Desktop/VAESelfies/output/yanci_only3/')
 np_files=glob(path.join(data_root,'*.npy'))
 # num_sample = len(np_files)
 num_sample=5000
@@ -91,7 +92,7 @@ def trainer(model_object, ckpt = checkpoint_dir, logdir = logdir, learning_rate=
 	model = model_object(logdir=logdir ,num_noise = num_noise, learning_rate = learning_rate)
 	data_feed = create_data_batch(batch_size)
 
-	if load(ckpt,model.saver):
+	if checkpoint_dir and load(ckpt,model.saver):
 		print("An existing model has been restored path : /n {}".format(ckpt))
 	else:
 		print("initialize a new training")
@@ -101,14 +102,15 @@ def trainer(model_object, ckpt = checkpoint_dir, logdir = logdir, learning_rate=
 		for _ in tqdm(range(num_sample // batch_size)):
 			# Get a batch and noise, train it
 			batch = next(data_feed)
-			# print(batch.shape)
+
 			z = np.random.uniform(-1,1,size=(batch_size,num_noise))
 			losses = model.train_single_step(img=batch,noise=z)
 
 			# show loss while training
-			for k, v in losses.items():
-				log_str += '{}: {:.3f}  '.format(k, v)
-			tqdm.write(log_str)
+			# log_str = ''
+			# for k, v in losses.items():
+			# 	log_str += '{}: {:.3f}  '.format(k, v)
+			# tqdm.write(log_str)
 		end_time = time.time()
 		
 
@@ -132,4 +134,4 @@ def trainer(model_object, ckpt = checkpoint_dir, logdir = logdir, learning_rate=
 	return model
 
 if __name__ == '__main__':
-	trainer(GAN_cnn)
+	trainer(W_GAN)
