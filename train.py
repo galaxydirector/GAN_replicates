@@ -23,11 +23,12 @@ from datetime import datetime
 import tensorflow as tf
 from model import GAN_cnn,W_GAN
 
-data_root=path.expanduser('/home/aitrading/Desktop/VAESelfies/output/yanci_only3/')
+data_root=path.expanduser('/home/aitrading/Desktop/VAESelfies/output/yanci_only0/')
 np_files=glob(path.join(data_root,'*.npy'))
 # num_sample = len(np_files)
-num_sample=5000
+num_sample=3200
 
+# checkpoint_dir = "/home/aitrading/Desktop/models/2019-05-04T23-08-29/model.ckpt-20"
 checkpoint_dir = None
 model_name = "{0:%Y-%m-%dT%H-%M-%S}".format(datetime.now())
 logdir = os.path.join(path.expanduser('/home/aitrading/Desktop/models'),model_name)
@@ -63,8 +64,12 @@ def save(saver, sess, logdir, epoch):
 	saver.save(sess, checkpoint_path, global_step=epoch)
 	print(' Done.')
 
-def load(checkpoint_dir,saver):
+def load(checkpoint_dir,saver,sess):
 	print(" [*] Reading checkpoints...")
+
+	# # temporary override
+	# saver.restore(sess, checkpoint_dir)
+	# return True
 
 	ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
 	if ckpt and ckpt.model_checkpoint_path:
@@ -74,7 +79,7 @@ def load(checkpoint_dir,saver):
 		return False
 
 def save_img(data,path_root,epoch):
-	plt.imshow(data.reshape(128,128))
+	plt.imshow(data.reshape(128,128),cmap="gray")
 	plt.title("epoch {} sample".format(epoch))
 
 	path_ = os.path.join(path_root,"epoch_{}".format(epoch))
@@ -82,7 +87,7 @@ def save_img(data,path_root,epoch):
 
 
 def trainer(model_object, ckpt = checkpoint_dir, logdir = logdir, learning_rate=1e-4, 
-			batch_size=32, num_epoch=331, log_step=20, num_noise = 64):
+			batch_size=32, num_epoch=1201, log_step=100, num_noise = 64):
 	"""Operations:
 	1. Set up the model
 	2. start the training 
@@ -92,7 +97,7 @@ def trainer(model_object, ckpt = checkpoint_dir, logdir = logdir, learning_rate=
 	model = model_object(logdir=logdir ,num_noise = num_noise, learning_rate = learning_rate)
 	data_feed = create_data_batch(batch_size)
 
-	if checkpoint_dir and load(ckpt,model.saver):
+	if checkpoint_dir and load(ckpt,model.saver,model.sess):
 		print("An existing model has been restored path : /n {}".format(ckpt))
 	else:
 		print("initialize a new training")
