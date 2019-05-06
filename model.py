@@ -350,11 +350,6 @@ class W_GAN(GAN_cnn):
 	def loss(self):
 		# Training pipeline
 		
-		# tvars=tf.trainable_variables()
-		# d_vars=[var for var in tvars if var.name.startswith("discriminator")]
-		# g_vars=[var for var in tvars if var.name.startswith("generator")]
-
-
 		# option to add noise on real img, TODO
 		noise_to_real_img = False
 		if noise_to_real_img:
@@ -376,7 +371,7 @@ class W_GAN(GAN_cnn):
 			d_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,scope="discriminator")
 			self.clip_discriminator_ops = [var.assign(tf.clip_by_value(var,self.clip_values[0],
 									self.clip_values[1])) for var in d_vars]
-		
+
 			update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS) # for batch norm ops
 			with tf.control_dependencies(update_ops):
 				self.d_trainer=tf.train.RMSPropOptimizer(self.learning_rate).minimize(self.d_loss_reduced,
